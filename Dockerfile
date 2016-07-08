@@ -2,14 +2,16 @@
 FROM benyoo/centos-core:7.2.1511.20160706
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
-ENV REDIS_VERSION=3.2.1
-ENV REDIS_DOWNLOAD_URL=http://download.redis.io/releases/redis-${REDIS_VERSION}.tar.gz \
-	REDIS_DOWNLOAD_SHA1=26c0fc282369121b4e278523fce122910b65fbbf
+ARG REDIS_VERSION=${REDIS_VERSION:-3.2.1}
+ARG REDIS_TAR_SHA256=${REDIS_TAR_SHA256:-26c0fc282369121b4e278523fce122910b65fbbf}
 
 RUN \
-	REDIS_FILE=${REDIS_DOWNLOAD_URL##*/} && \
+	DOWN_URL="http://download.redis.io/releases" && \
+	DOWN_URL="${DOWN_URL}/redis-${REDIS_VERSION}.tar.gz" && \
+	REDIS_FILE=${DOWN_URL##*/} && \
 	mkdir /tmp/redis && \
 	cd /tmp/redis && \
+	{ while :;do curl -Lk ${DOWN_URL} -o /tmp/redis/${FILE_NAME} && { [ "$(sha256sum /tmp/redis/${FILE_NAME}|awk '{print $1}')" == "${REDIS_TAR_SHA256}" ] && break; }; done; } && \
 	curl -Lk "$REDIS_DOWNLOAD_URL" -o ${REDIS_DOWNLOAD_URL##*/} && \
 	tar xf ${REDIS_DOWNLOAD_URL##*/} && \
 	cd ${REDIS_FILE%.tar*} && \
