@@ -7,14 +7,7 @@
 # Created Time: 2016年06月30日 星期四 19时38分40秒
 #########################################################################
 
-if ! which redis-server >/dev/null 2>&1; then source /etc/profile.d/redis.sh;fi
-
 set -e
-sysctl -w net.core.somaxconn=1024 >/dev/null 2>&1
-sysctl -w vm.overcommit_memory=1 >/dev/null 2>&1
-echo never > /sys/kernel/mm/transparent_hugepage/enabled
-echo never > /sys/kernel/mm/transparent_hugepage/defrag
-
 
 # first arg is `-f` or `--some-option`
 # or first arg is `something.conf`
@@ -25,7 +18,7 @@ fi
 # allow the container to be started with `--user`
 if [ "$1" = 'redis-server' -a "$(id -u)" = '0' ]; then
 	chown -R redis .
-	#exec gosu redis "$0" "$@"
+	exec su-exec redis "$0" "$@"
 fi
 
 if [ "$1" = 'redis-server' ]; then

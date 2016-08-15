@@ -1,43 +1,39 @@
-#FROM benyoo/centos:7.2.1511.20160630
-FROM benyoo/centos-core:7.2.1511.20160706
+FROM benyoo/alpine:3.4.20160812
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
-ARG REDIS_VERSION=${REDIS_VERSION:-3.2.1}
-ARG REDIS_TAR_SHA256=${REDIS_TAR_SHA256:-26c0fc282369121b4e278523fce122910b65fbbf}
+ENV VERSION=3.2.3
+ENV DOWN_URL=http://download.redis.io/releases/redis-${VERSION}.tar.gz \
+	SHA256=674e9c38472e96491b7d4f7b42c38b71b5acbca945856e209cb428fbc6135f15 \
+	TEMP_DIR=/tmp/redis
 
-RUN \
-	DOWN_URL="http://download.redis.io/releases" && \
-	DOWN_URL="${DOWN_URL}/redis-${REDIS_VERSION}.tar.gz" && \
-	REDIS_FILE=${DOWN_URL##*/} && \
-	mkdir /tmp/redis && \
-	cd /tmp/redis && \
-	{ while :;do curl -Lk ${DOWN_URL} -o /tmp/redis/${FILE_NAME} && { [ "$(sha256sum /tmp/redis/${FILE_NAME}|awk '{print $1}')" == "${REDIS_TAR_SHA256}" ] && break; }; done; } && \
-	curl -Lk "$REDIS_DOWNLOAD_URL" -o ${REDIS_DOWNLOAD_URL##*/} && \
-	tar xf ${REDIS_DOWNLOAD_URL##*/} && \
-	cd ${REDIS_FILE%.tar*} && \
-	yum install epel-release -y && \
-	#sed -i 's@mirrorlist@#&@;s@#baseurl=http://mirror.centos.org@baseurl=http://mirrors.ds.com@' /etc/yum.repos.d/CentOS-Base.repo && \
-	#sed -i 's@mirrorlist@#&@;s@#baseurl=http://download.fedoraproject.org/pub@baseurl=http://mirrors.ds.com@' /etc/yum.repos.d/epel.repo && \
-	yum install jemalloc-devel gcc make -y && \
-	make -j $(awk '/processor/{i++}END{print i}' /proc/cpuinfo) && \
-	mkdir -p /usr/local/redis/{bin,etc,var} && \
-	cp -af src/{redis-benchmark,redis-check-aof,redis-check-rdb,redis-cli,redis-sentinel,redis-server} /usr/local/redis/bin/ && \
-	cp -a redis.conf /usr/local/redis/etc/ && \
-	echo "export PATH=/usr/local/redis/bin:\$PATH" > /etc/profile.d/redis.sh && \
-	source /etc/profile.d/redis.sh && \
-	useradd -r -s /sbin/nologin -c "Redis Server" -d /data -m -k no redis && \
-	yum clean all && \
-	rm -rf /tmp/redis
+RUN set -x && \
+	FILE_NAME=${DOWN_URL##*/} && \
+	mkdir -p ${TEMP_DIR} /data && cd ${TEMP_DIR} && \
+	apk --update --no-cache upgrade && \
+	apk add --no-cache 'su-exec>=0.2' && \
+	apk add --no-cache --virtual .build-deps gcc linux-headers make musl-dev tar && \
+	addgroup -S redis && adduser -S -h /data/redis -s /sbin/nologin -G redis redis && \
+	curl -Lk ${DOWN_URL} |tar xz -C ${TEMP_DIR} --strip-components=1 && \
+	#{ while :;do \
+	#	curl -Lk ${DOWN_URL} -o ${TEMP_DIR}/${FILE_NAME} && { \
+	#		[ "$(sha256sum ${TEMP_DIR}/${FILE_NAME}|awk '{print $1}')" == "${SHA256}" ] && break; \
+	#	}; \
+	#done; } && \
+	#cd ${FILE_NAME%.tar*} && \
+# grab su-exec for easy step-down from root
+	make -C ${TEMP_DIR} && \
+	make -C ${TEMP_DIR} install && \
+	apk del .build-deps tar gcc make && \
+	rm -rf /var/cache/apk/* ${TEMP_DIR}
 
-COPY entrypoint.sh /usr/local/redis/bin/entrypoint.sh
-RUN chmod +x /usr/local/redis/bin/entrypoint.sh
-ENV PATH=/usr/local/redis/bin:$PATH
+COPY entrypoint.sh /usr/entrypoint.sh
+RUN chmod +x /usr/entrypoint.sh
 
 VOLUME ["/data"]
 WORKDIR /data
 
 EXPOSE 6379/tcp
 
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["redis-server"]
