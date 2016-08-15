@@ -10,6 +10,7 @@ RUN set -x && \
 	FILE_NAME=${DOWN_URL##*/} && \
 	mkdir -p ${TEMP_DIR} /data && cd ${TEMP_DIR} && \
 	apk --update --no-cache upgrade && \
+# grab su-exec for easy step-down from root
 	apk add --no-cache 'su-exec>=0.2' && \
 	apk add --no-cache --virtual .build-deps gcc linux-headers make musl-dev tar && \
 	addgroup -S redis && adduser -S -h /data/redis -s /sbin/nologin -G redis redis && \
@@ -20,7 +21,6 @@ RUN set -x && \
 	#	}; \
 	#done; } && \
 	#cd ${FILE_NAME%.tar*} && \
-# grab su-exec for easy step-down from root
 	make -C ${TEMP_DIR} && \
 	make -C ${TEMP_DIR} install && \
 	apk del .build-deps tar gcc make && \
