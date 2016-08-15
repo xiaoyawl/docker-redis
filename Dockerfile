@@ -26,8 +26,8 @@ RUN set -x && \
 	apk del .build-deps tar gcc make && \
 	rm -rf /var/cache/apk/* ${TEMP_DIR}
 
-COPY entrypoint.sh /usr/entrypoint.sh
-RUN chmod +x /usr/entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 VOLUME ["/data"]
 WORKDIR /data
