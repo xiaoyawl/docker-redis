@@ -3,12 +3,15 @@ version: '2'
 services:
   redis:
     build:
-      context: http://git.dwhd.org/lookback/docker-redis.git
+      context: https://github.com/xiaoyawl/docker-redis.git
+    container_name: redis
+    command: ["redis-server", "/etc/redis.conf"]
     restart: always
     privileged: true
-    image: redis:3.2.1
-    ports:
-    - "6379:6379"
+    image: benyoo/redis:3.2.3
+    environment:
+    - TERM=linux
     volumes:
-    - /data/redis:/data/:Z
-    - /etc/localtime:/etc/localtime
+    - /etc/localtime:/etc/localtime:ro
+    - /data/gitlab/redis.conf:/etc/redis.conf:ro
+    - /data/gitlab/redis:/data/redis:Z
