@@ -27,6 +27,7 @@ RUN set -x && \
 	rm -rf /var/cache/apk/* ${TEMP_DIR}
 
 COPY entrypoint.sh /entrypoint.sh
+COPY redis.conf /etc/redis.conf
 RUN chmod +x /entrypoint.sh
 
 VOLUME ["/data"]
