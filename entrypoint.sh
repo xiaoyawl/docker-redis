@@ -9,8 +9,8 @@
 
 set -e
 
-[ -d ${DATA_DIR} ] && chown -R redis.redis ${DATA_DIR}
-[ -f "$2" ] && chown redis.redis $2
+DEFAULT_CONF=${DEFAULT_CONF:-enable}
+REDIS_PASS=${REDIS_PASS:-$(date +"%s%N"| sha256sum | base64 | head -c 16)}
 
 # first arg is `-f` or `--some-option`
 # or first arg is `something.conf`
@@ -20,7 +20,8 @@ fi
 
 # allow the container to be started with `--user`
 if [ "$1" = 'redis-server' -a "$(id -u)" = '0' ]; then
-	#chown -R redis ./redis
+	[ -d ${DATA_DIR} ] && chown -R redis.redis ${DATA_DIR}
+	[ -f "$2" ] && chown redis.redis $2
 	exec su-exec redis "$0" "$@"
 fi
 
@@ -38,11 +39,8 @@ if [ "$1" = 'redis-server' ]; then
 			doProtectedMode=
 		fi
 		if [[ ! ${DEFAULT_CONF} =~ ^[dD][iI][sS][aA][bB][lL][eE]$ ]]; then
-			if ! grep -q '^requirepass' "$configFile"; then
-				echo "requirepass $(date +"%s%N"| sha256sum | base64 | head -c 16)" >> $configFile
-			fi
-			REDIS_PASS=`awk '/^requirepass/{print $NF}' $configFile`
-			echo -e "\033[45;37;1mRedis Server Auth Password : ${REDIS_PASS}\033[39;49;0m"
+			[[ -z $(grep -q '^requirepass' "$configFile") ]] && echo "requirepass ${REDIS_PASS}" >> $configFile
+			echo -e "\033[45;37;1mRedis Server Auth Password : $(awk '/^requirepass/{print $NF}' $configFile)\033[39;49;0m"
 		fi
 	fi
 	if [ "$doProtectedMode" ]; then
