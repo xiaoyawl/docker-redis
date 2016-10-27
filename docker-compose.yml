@@ -8,10 +8,9 @@ services:
     command: ["redis-server", "/etc/redis.conf"]
     restart: always
     privileged: true
-    image: benyoo/redis:3.2.3
+    image: benyoo/redis:3.2.5
     environment:
     - TERM=linux
     volumes:
     - /etc/localtime:/etc/localtime:ro
-    - /data/gitlab/redis.conf:/etc/redis.conf:ro
-    - /data/gitlab/redis:/data/redis:Z
+    - /data/redis-data:/data/redis:Z

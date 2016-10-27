@@ -9,6 +9,9 @@
 
 set -e
 
+[ -d ${DATA_DIR} ] && chown -R redis.redis ${DATA_DIR}
+[ -f "$2" ] && chown redis.redis $2
+
 # first arg is `-f` or `--some-option`
 # or first arg is `something.conf`
 if [ "${1#-}" != "$1" ] || [ "${1%.conf}" != "$1" ]; then
@@ -33,6 +36,13 @@ if [ "$1" = 'redis-server' ]; then
 		if grep -q '^protected-mode' "$configFile"; then
 			# if a config file is supplied and explicitly specifies "protected-mode", let it win
 			doProtectedMode=
+		fi
+		if [[ ! ${DEFAULT_CONF} =~ ^[dD][iI][sS][aA][bB][lL][eE]$ ]]; then
+			if ! grep -q '^requirepass' "$configFile"; then
+				echo "requirepass $(date +"%s%N"| sha256sum | base64 | head -c 16)" >> $configFile
+			fi
+			REDIS_PASS=`awk '/^requirepass/{print $NF}' $configFile`
+			echo -e "\033[45;37;1mRedis Server Auth Password : ${REDIS_PASS}\033[39;49;0m"
 		fi
 	fi
 	if [ "$doProtectedMode" ]; then
