@@ -39,7 +39,7 @@ if [ "$1" = 'redis-server' ]; then
 			doProtectedMode=
 		fi
 		if [[ ! ${DEFAULT_CONF} =~ ^[dD][iI][sS][aA][bB][lL][eE]$ ]]; then
-			[[ -z $(grep -q '^requirepass' "$configFile") ]] && echo "requirepass ${REDIS_PASS}" >> $configFile
+			[[ -z $(grep '^requirepass' "$configFile") ]] && echo "requirepass ${REDIS_PASS}" >> $configFile
 			echo -e "\033[45;37;1mRedis Server Auth Password : $(awk '/^requirepass/{print $NF}' $configFile)\033[39;49;0m"
 		fi
 	fi

@@ -23,7 +23,6 @@ RUN set -x && \
 
 COPY entrypoint.sh /entrypoint.sh
 COPY redis.conf /etc/redis.conf
-RUN chmod +x /entrypoint.sh
 
 VOLUME ${DATA_DIR}
 WORKDIR ${DATA_DIR}
