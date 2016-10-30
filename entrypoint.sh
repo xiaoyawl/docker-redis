@@ -8,6 +8,9 @@
 #########################################################################
 
 set -e
+echo 1 > /proc/sys/vm/overcommit_memory
+sysctl -w net.core.somaxconn=8192 vm.overcommit_memory=1
+echo never|tee /sys/kernel/mm/transparent_hugepage/{defrag,enabled}
 
 DEFAULT_CONF=${DEFAULT_CONF:-enable}
 REDIS_PASS=${REDIS_PASS:-$(date +"%s%N"| sha256sum | base64 | head -c 16)}

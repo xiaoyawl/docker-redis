@@ -16,7 +16,7 @@ RUN set -x && \
 	addgroup -S redis && adduser -S -h ${DATA_DIR} -s /sbin/nologin -G redis redis && \
 	curl -Lk ${DOWN_URL} |tar xz -C ${TEMP_DIR} --strip-components=1 && \
 	cd ${TEMP_DIR} && \
-	make -C ${TEMP_DIR} && \
+	make -C ${TEMP_DIR} -j $(awk '/processor/{i++}END{print i}' /proc/cpuinfo) && \
 	make -C ${TEMP_DIR} install && \
 	apk del .build-deps tar gcc make && \
 	rm -rf /var/cache/apk/* ${TEMP_DIR}
