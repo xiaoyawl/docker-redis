@@ -3,6 +3,8 @@
 How to use this image
 start a redis instanc
 
+Due to the need to modify the kernel parameters it is strongly recommended to add the `--privileged` startup parameter
+
 ```bash
 $ dock build -t benyoo/redis:3.2.5 ./
 $ docker run -d --name redis -p 6379:6379 benyoo/redis:3.2.5
