@@ -8,9 +8,12 @@
 #########################################################################
 
 set -e
-echo 1 > /proc/sys/vm/overcommit_memory
-sysctl -w net.core.somaxconn=8192 vm.overcommit_memory=1
-echo never|tee /sys/kernel/mm/transparent_hugepage/{defrag,enabled}
+
+#if [ "$(id -u)" = '0' -a -n "$(sysctl -w net.core.somaxconn=8192)" ]; then
+if [ "$(id -u)" = '0' ] && [[ $(sysctl -w net.core.somaxconn=8192) ]]; then
+	sysctl -w vm.overcommit_memory=1
+	echo never|tee /sys/kernel/mm/transparent_hugepage/{defrag,enabled}
+fi
 
 DEFAULT_CONF=${DEFAULT_CONF:-enable}
 REDIS_PASS=${REDIS_PASS:-$(date +"%s%N"| sha256sum | base64 | head -c 16)}
