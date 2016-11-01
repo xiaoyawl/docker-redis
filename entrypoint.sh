@@ -9,58 +9,76 @@
 
 set -e
 
-#if [ "$(id -u)" = '0' -a -n "$(sysctl -w net.core.somaxconn=8192)" ]; then
+DEFAULT_CONF=${DEFAULT_CONF:-enable}
+REDIS_PASS=${REDIS_PASS:-$(date +"%s%N"| sha256sum | base64 | head -c 16)}
+CONFIG_FILE=${CONFIG_FILE:-/etc/redis.conf}
+SENTINEL_FILE=${SENTINEL_FILE:-/etc/sentinel.conf}
+SUPERVISORCTL_NAME=${SUPERVISORCTL_NAME:-admin}
+SUPERVISORCTL_PASS=${SUPERVISORCTL_PASS:-admin}
+
+#Sentinel variable
+S_PORT=${S_PORT:-26379}
+S_BIND=${S_BIND:-0.0.0.0}
+S_DATA=${S_DATA:-/data/redis}
+S_AUTH_PASS=${S_AUTH_PASS:-dwhd}
+S_MASTER_NAME=${S_MASTER_NAME:-master6379}
+S_PIDFILE=${S_PIDFILE:-/var/run/sentinel6379.pid}
+S_LOGFILE=${S_LOGFILE:-/var/log/sentinel6379.log}
+S_MASTER_IP=${S_MASTER_IP:-127.0.0.1}
+S_MASTER_PORT=${S_MASTER_PORT:-6379}
+S_MASTER_QUORUM=${S_MASTER_QUORUM:-2}
+S_FAILOVER_TIMEOUT=${S_FAILOVER_TIMEOUT:-3000}
+S_DOWN_AFTER_MILLISECONDS=${S_DOWN_AFTER_MILLISECONDS:-3000}
+S_RECONFIG_SCRIPT=${S_RECONFIG_SCRIPT:-disable}
+S_CLIENT_RECONFIG_SCRIPT=${S_CLIENT_RECONFIG_SCRIPT:-/opt/notify_master6379.sh}
+
+[ ! -d /var/log/supervisor ] && mkdir -p /var/log/supervisor
+sed -ri "s/^(username).*/\1 = ${SUPERVISORCTL_NAME}/" /etc/supervisord.conf
+sed -ri "s/^(password).*/\1 = ${SUPERVISORCTL_PASS}/" /etc/supervisord.conf
+
 if [ "$(id -u)" = '0' ] && [[ $(sysctl -w net.core.somaxconn=8192) ]]; then
 	sysctl -w vm.overcommit_memory=1
 	echo never|tee /sys/kernel/mm/transparent_hugepage/{defrag,enabled}
 fi
 
-DEFAULT_CONF=${DEFAULT_CONF:-enable}
-REDIS_PASS=${REDIS_PASS:-$(date +"%s%N"| sha256sum | base64 | head -c 16)}
-
-# first arg is `-f` or `--some-option`
-# or first arg is `something.conf`
-if [ "${1#-}" != "$1" ] || [ "${1%.conf}" != "$1" ]; then
-	set -- redis-server "$@"
-fi
-
-# allow the container to be started with `--user`
-if [ "$1" = 'redis-server' -a "$(id -u)" = '0' ]; then
-	[ -d ${DATA_DIR} ] && chown -R redis.redis ${DATA_DIR}
-	[ -f "$2" ] && chown redis.redis $2
-	exec su-exec redis "$0" "$@"
-fi
-
-if [ "$1" = 'redis-server' ]; then
-	# Disable Redis protected mode [1] as it is unnecessary in context
-	# of Docker. Ports are not automatically exposed when running inside
-	# Docker, but rather explicitely by specifying -p / -P.
-	# [1] https://github.com/antirez/redis/commit/edd4d555df57dc84265fdfb4ef59a4678832f6da
-	doProtectedMode=1
-	configFile=
-	if [ -f "$2" ]; then
-		configFile="$2"
-		if grep -q '^protected-mode' "$configFile"; then
-			# if a config file is supplied and explicitly specifies "protected-mode", let it win
-			doProtectedMode=
-		fi
-		if [[ ! ${DEFAULT_CONF} =~ ^[dD][iI][sS][aA][bB][lL][eE]$ ]]; then
-			[[ -z $(grep '^requirepass' "$configFile") ]] && echo "requirepass ${REDIS_PASS}" >> $configFile
-			echo -e "\033[45;37;1mRedis Server Auth Password : $(awk '/^requirepass/{print $NF}' $configFile)\033[39;49;0m"
+if [[ "$SENTINEL" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	if  [[ ! -f ${SENTINEL_FILE} ]]; then
+		cat > ${SENTINEL_FILE} <<-EOF
+			port ${S_PORT}
+			bind ${S_BIND}
+			dir "${S_DATA}"
+			pidfile "${S_PIDFILE}"
+			logfile "${S_LOGFILE}"
+			sentinel monitor ${S_MASTER_NAME} ${S_MASTER_IP} ${S_MASTER_PORT} ${S_MASTER_QUORUM}
+			sentinel down-after-milliseconds ${S_MASTER_NAME} ${S_DOWN_AFTER_MILLISECONDS}
+			sentinel failover-timeout ${S_MASTER_NAME} ${S_FAILOVER_TIMEOUT}
+			sentinel auth-pass ${S_MASTER_NAME} ${S_AUTH_PASS}
+		EOF
+		if [[ "${S_RECONFIG_SCRIPT}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+			if [ ! -f ${S_CLIENT_RECONFIG_SCRIPT} ]; then
+				echo >&2 -e 'error:  \033[41;37;1mmissing sentinel configfile\033[39;49;0m'
+				echo >&2 '  Did you forget to add a sentinel config file?'
+				exit 1
+			fi
+			echo "sentinel client-reconfig-script ${S_MASTER_NAME} ${S_CLIENT_RECONFIG_SCRIPT}" >> ${SENTINEL_FILE}
+			chmod +x ${S_CLIENT_RECONFIG_SCRIPT}
 		fi
 	fi
-	if [ "$doProtectedMode" ]; then
-		shift # "redis-server"
-		if [ "$configFile" ]; then
-			shift
-		fi
-		set -- --protected-mode no "$@"
-		if [ "$configFile" ]; then
-			set -- "$configFile" "$@"
-		fi
-		set -- redis-server "$@" # redis-server [config file] --protected-mode no [other options]
-		# if this is supplied again, the "latest" wins, so "--protected-mode no --protected-mode yes" will result in an enabled status
-	fi
+
+	cat >> /etc/supervisord.conf <<-EOF
+		[program:redis-sentinel]
+		command=/bin/bash -c "redis-server ${SENTINEL_FILE} --sentinel"
+		autostart=true
+		autorestart=false
+		startretries=0
+		stdout_events_enabled=true
+		stderr_events_enabled=true
+	EOF
 fi
 
-exec "$@"
+if [[ ${DEFAULT_CONF} =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	[[ -z $(grep '^requirepass' "$CONFIG_FILE") ]] && echo "requirepass ${REDIS_PASS}" >> $CONFIG_FILE
+	echo -e "\033[45;37;1mRedis Server Auth Password : $(awk '/^requirepass/{print $NF}' $CONFIG_FILE)\033[39;49;0m"
+fi
+
+supervisord -n -c /etc/supervisord.conf

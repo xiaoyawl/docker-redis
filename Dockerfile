@@ -13,16 +13,17 @@ RUN set -x && \
 # grab su-exec for easy step-down from root
 	apk add --no-cache 'su-exec>=0.2' && \
 	apk add --no-cache --virtual .build-deps gcc linux-headers make musl-dev tar && \
+	apk add --no-cache supervisor && \
 	addgroup -S redis && adduser -S -h ${DATA_DIR} -s /sbin/nologin -G redis redis && \
 	curl -Lk ${DOWN_URL} |tar xz -C ${TEMP_DIR} --strip-components=1 && \
 	cd ${TEMP_DIR} && \
 	make -C ${TEMP_DIR} -j $(awk '/processor/{i++}END{print i}' /proc/cpuinfo) && \
 	make -C ${TEMP_DIR} install && \
-	apk del .build-deps tar gcc make && \
+	apk del .build-deps && \
 	rm -rf /var/cache/apk/* ${TEMP_DIR}
 
 COPY entrypoint.sh /entrypoint.sh
-COPY redis.conf /etc/redis.conf
+COPY etc /etc
 
 VOLUME ${DATA_DIR}
 WORKDIR ${DATA_DIR}
@@ -30,4 +31,4 @@ WORKDIR ${DATA_DIR}
 EXPOSE 6379/tcp
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["redis-server", "/etc/redis.conf"]
+#CMD ["redis-server", "/etc/redis.conf"]
