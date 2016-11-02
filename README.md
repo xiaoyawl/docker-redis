@@ -11,7 +11,7 @@ $ dock build -t github.com/xiaoyawl/docker-redis.git#sentinel ./
 $ docker run -d --name redis --privileged -p 6379:6379 registry.ds.com/benyoo/redis:3.2.5
 ```
 
-2、通过pull [Docker Hub](https://hub.docker.com/r/benyoo/redis/){:target="_blank"}启动
+2、通过pull [Docker Hub](https://hub.docker.com/r/benyoo/redis/)启动
 ```bash
 $ docker run -d --name redis --privileged -p 6379:6379 benyoo/redis:3.2.5
 ```
