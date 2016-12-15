@@ -82,7 +82,7 @@ if [[ ${DEFAULT_CONF} =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 fi
 
 if [[ -n ${SUPERVISOR_PORT} ]]; then
-	sed -i 's/^port.*/port = 0.0.0.0:${SUPERVISOR_PORT}/' /etc/supervisord.conf
+	sed -i "s/^port.*/port = 0.0.0.0:${SUPERVISOR_PORT}/" /etc/supervisord.conf
 fi
 
 supervisord -n -c /etc/supervisord.conf
