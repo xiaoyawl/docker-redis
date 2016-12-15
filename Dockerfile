@@ -11,7 +11,7 @@ RUN set -x && \
 	mkdir -p ${TEMP_DIR} ${DATA_DIR} && \
 	apk --update --no-cache upgrade && \
 # grab su-exec for easy step-down from root
-	apk add --no-cache 'su-exec>=0.2' && \
+	apk add --no-cache 'su-exec>=0.2' openssh && \
 	apk add --no-cache --virtual .build-deps gcc linux-headers make musl-dev tar && \
 	addgroup -S redis && adduser -S -h ${DATA_DIR} -s /sbin/nologin -G redis redis && \
 	curl -Lk ${DOWN_URL} |tar xz -C ${TEMP_DIR} --strip-components=1 && \
