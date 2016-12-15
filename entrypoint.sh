@@ -81,4 +81,8 @@ if [[ ${DEFAULT_CONF} =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	echo -e "\033[45;37;1mRedis Server Auth Password : $(awk '/^requirepass/{print $NF}' $CONFIG_FILE)\033[39;49;0m"
 fi
 
+if [[ -n ${SUPERVISOR_PORT} ]]; then
+	sed -i 's/^port.*/port = 0.0.0.0:${SUPERVISOR_PORT}/' /etc/supervisord.conf
+fi
+
 supervisord -n -c /etc/supervisord.conf
