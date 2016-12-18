@@ -13,7 +13,7 @@ RUN set -x && \
 # grab su-exec for easy step-down from root
 	apk add --no-cache 'su-exec>=0.2' && \
 	apk add --no-cache --virtual .build-deps gcc linux-headers make musl-dev tar && \
-	apk add --no-cache supervisor && \
+	apk add --no-cache supervisor openssh && \
 	addgroup -S redis && adduser -S -h ${DATA_DIR} -s /sbin/nologin -G redis redis && \
 	curl -Lk ${DOWN_URL} |tar xz -C ${TEMP_DIR} --strip-components=1 && \
 	cd ${TEMP_DIR} && \
