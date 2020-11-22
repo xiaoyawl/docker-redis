@@ -1,7 +1,9 @@
-FROM benyoo/alpine:3.4.20160812
+#FROM benyoo/alpine:3.4.20160812
+FROM benyoo/alpine:3.9.20190527
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
-ENV VERSION=3.2.5
+#ENV VERSION=3.2.5
+ENV VERSION=6.0.9
 ENV DOWN_URL=http://download.redis.io/releases/redis-${VERSION}.tar.gz \
 	TEMP_DIR=/tmp/redis \
 	DATA_DIR=/data/redis
