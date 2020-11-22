@@ -8,7 +8,7 @@ services:
     command: ["redis-server", "/etc/redis.conf"]
     restart: always
     privileged: true
-    image: benyoo/redis:3.2.5
+    image: benyoo/redis:6.0.9
     environment:
     - TERM=linux
     volumes:

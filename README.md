@@ -9,12 +9,12 @@
 
 ```bash
 $ dock build -t github.com/xiaoyawl/docker-redis.git#sentinel ./
-$ docker run -d --name redis --privileged -p 6379:6379 registry.ds.com/benyoo/redis:3.2.5
+$ docker run -d --name redis --privileged -p 6379:6379 registry.ds.com/benyoo/redis:6.0.9
 ```
 
 2、通过pull [Docker Hub](https://hub.docker.com/r/benyoo/redis/)启动
 ```bash
-$ docker run -d --name redis --privileged -p 6379:6379 benyoo/redis:3.2.5
+$ docker run -d --name redis --privileged -p 6379:6379 benyoo/redis:6.0.9
 ```
 
 3、通过docker-compose来实现快速启动
@@ -28,7 +28,7 @@ $ docker-compose up -d
 # 启动Sentinel
 
 ```bash
-$ docker run -d --name redis --privileged --network host -e SENTINEL=enable benyoo/redis:3.2.5-sentinel
+$ docker run -d --name redis --privileged --network host -e SENTINEL=enable benyoo/redis:6.0.9-sentinel
 ```
 
 
