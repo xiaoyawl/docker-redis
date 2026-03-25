@@ -2,12 +2,12 @@ FROM benyoo/alpine:3.20.20241120
 LABEL maintainer="from www.dwhd.org by lookback (mondeolove@gmail.com)"
 
 ARG REDIS_VERSION=7.2.9
-ENV VERSION=${REDIS_VERSION} \
-    DOWN_URL=https://download.redis.io/releases/redis-${VERSION}.tar.gz \
-    TEMP_DIR=/tmp/redis \
+ENV TEMP_DIR=/tmp/redis \
     DATA_DIR=/data/redis
 
 RUN set -eux; \
+    [ -n "${REDIS_VERSION}" ]; \
+    DOWN_URL="https://download.redis.io/releases/redis-${REDIS_VERSION}.tar.gz"; \
     mkdir -p "${TEMP_DIR}" "${DATA_DIR}"; \
     apk add --no-cache bash 'su-exec>=0.2'; \
     apk add --no-cache --virtual .build-deps curl gcc linux-headers make musl-dev tar; \
