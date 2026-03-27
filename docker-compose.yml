@@ -3,8 +3,9 @@ services:
     build:
       context: .
       args:
-        REDIS_VERSION: 7.2.9
-    image: docker-redis:7.2.9
+        BASE_IMAGE: benyoo/alpine:3.21.20260327
+        REDIS_VERSION: 7.2.11
+    image: docker-redis:7.2.11
     container_name: redis
     restart: unless-stopped
     ports:

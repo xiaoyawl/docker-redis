@@ -1,7 +1,8 @@
-FROM benyoo/alpine:3.20.20241120
+ARG BASE_IMAGE=benyoo/alpine:3.21.20260327
+FROM ${BASE_IMAGE}
 LABEL maintainer="from www.dwhd.org by lookback (mondeolove@gmail.com)"
 
-ARG REDIS_VERSION=7.2.9
+ARG REDIS_VERSION=7.2.11
 ENV TEMP_DIR=/tmp/redis \
     DATA_DIR=/data/redis
 

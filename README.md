@@ -1,6 +1,6 @@
 # docker-redis
 
-基于 Alpine 源码编译 Redis 7 的容器项目，提供以下能力：
+基于 Alpine 源码编译 Redis 7/8 的容器项目，提供以下能力：
 
 - 体积更小且构建过程更可控（源码编译 + 构建依赖清理）。
 - 默认启用数据持久化（RDB + AOF）。
@@ -24,10 +24,20 @@
 
 ## 版本与默认信息
 
-- 基础镜像：`benyoo/alpine:3.20.20241120`
-- Redis 默认版本：`7.2.9`（可通过构建参数 `REDIS_VERSION` 覆盖）
+- 默认基础镜像：`benyoo/alpine:3.21.20260327`
+- 默认 Redis 版本：`7.2.11`（可通过构建参数 `BASE_IMAGE`、`REDIS_VERSION` 覆盖）
 - 默认数据目录：`/data/redis`
 - 默认配置文件：`/etc/redis.conf`
+
+### 推荐组合（与 Git tag 对应）
+
+| Git tag | 基础镜像 | Redis 版本 |
+| --- | --- | --- |
+| `7.2.11` | `benyoo/alpine:3.21.20260327` | `7.2.11` |
+| `8.0.4` | `benyoo/alpine:3.22.20260327` | `8.0.4` |
+| `8.4.2` | `benyoo/alpine:3.23.20260327` | `8.4.2` |
+
+同一仓库提交下通过不同构建参数产出对应镜像；检出对应 tag 后按上表 `docker build` 即可。
 
 ---
 
@@ -65,14 +75,28 @@ redis-cli -h 127.0.0.1 -p 6379 -a <你的密码> ping
 
 ### 1) 本地构建镜像
 
+默认（Redis 7.2.11 + Alpine 3.21）：
+
 ```bash
-docker build -t docker-redis:7.2.9 .
+docker build -t benyoo/redis:7.2.11 .
 ```
 
-或指定 Redis 版本：
+Redis 8.0.4（Alpine 3.22）：
 
 ```bash
-docker build --build-arg REDIS_VERSION=7.2.10 -t docker-redis:7.2.10 .
+docker build \
+  --build-arg BASE_IMAGE=benyoo/alpine:3.22.20260327 \
+  --build-arg REDIS_VERSION=8.0.4 \
+  -t benyoo/redis:8.0.4 .
+```
+
+Redis 8.4.2（Alpine 3.23）：
+
+```bash
+docker build \
+  --build-arg BASE_IMAGE=benyoo/alpine:3.23.20260327 \
+  --build-arg REDIS_VERSION=8.4.2 \
+  -t benyoo/redis:8.4.2 .
 ```
 
 ### 2) 启动容器
@@ -86,7 +110,7 @@ docker run -d \
   -v "$(pwd)/data:/data/redis" \
   -v "$(pwd)/redis.conf:/etc/redis.conf" \
   --restart unless-stopped \
-  docker-redis:7.2.9
+  docker-redis:7.2.11
 ```
 
 启用密码时追加：
