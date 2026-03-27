@@ -10,7 +10,7 @@ RUN set -eux; \
     [ -n "${REDIS_VERSION}" ]; \
     DOWN_URL="https://download.redis.io/releases/redis-${REDIS_VERSION}.tar.gz"; \
     mkdir -p "${TEMP_DIR}" "${DATA_DIR}"; \
-    apk add --no-cache bash 'su-exec>=0.2'; \
+    apk add --no-cache bash libstdc++ 'su-exec>=0.2'; \
     apk add --no-cache --virtual .build-deps curl g++ gcc linux-headers make musl-dev tar; \
     addgroup -S redis; \
     adduser -S -h "${DATA_DIR}" -s /sbin/nologin -G redis redis; \

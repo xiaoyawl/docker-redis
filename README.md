@@ -39,7 +39,7 @@
 
 同一仓库提交下通过不同构建参数产出对应镜像；检出对应 tag 后按上表 `docker build` 即可。
 
-Redis 8.x 在编译 `redis-benchmark` 时会链接 `libstdc++`，Dockerfile 已在构建阶段安装 `g++`（构建结束后随 `.build-deps` 一并卸载，不留在最终镜像里）。
+Redis 8.x 的 `redis-server` 等二进制运行时需要 `libstdc++.so.6`。Dockerfile 在构建阶段安装 `g++` 用于编译（构建结束后卸载），并**单独保留**运行时包 `libstdc++`，避免容器启动报 `libstdc++.so.6: No such file or directory`。
 
 ---
 
